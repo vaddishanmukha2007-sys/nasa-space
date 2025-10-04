@@ -21,10 +21,38 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [csvPreview, setCsvPreview] = useState<ExoplanetData[] | null>(null);
   const [rawCsvContent, setRawCsvContent] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof ExoplanetData, string>>>({});
 
+  const validateField = (name: keyof ExoplanetData, value: number, config: { min: number; max: number; }): string | undefined => {
+    if (value < config.min || value > config.max) {
+      return `Must be between ${config.min} and ${config.max}.`;
+    }
+    return undefined;
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setData({ ...data, [e.target.name]: parseFloat(e.target.value) || 0 });
+    const name = e.target.name as keyof ExoplanetData;
+    const value = e.target.value;
+    const numericValue = value === '' ? NaN : parseFloat(value);
+
+    // Prevent non-numeric values from updating the state, which would crash the range slider
+    if (isNaN(numericValue)) {
+      setErrors({ ...errors, [name]: 'Please enter a valid number.' });
+      return; // Do not update data state
+    }
+
+    const updatedData = { ...data, [name]: numericValue };
+    setData(updatedData);
+
+    // Validate the field that changed
+    const fieldConfigs = {
+      orbitalPeriod: { min: 0.1, max: 10000 },
+      transitDuration: { min: 0.1, max: 24 },
+      planetaryRadius: { min: 0.1, max: 20 },
+      stellarTemperature: { min: 2000, max: 10000 },
+    };
+    const error = validateField(name, numericValue, fieldConfigs[name]);
+    setErrors({ ...errors, [name]: error });
   };
   
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -88,13 +116,12 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
       }
   };
 
-
   const renderManualInput = () => (
     <div className="space-y-6 animate-fade-in">
-        <InputField label="Orbital Period (days)" name="orbitalPeriod" value={data.orbitalPeriod} onChange={handleInputChange} min={0.1} max={10000} step={0.1} />
-        <InputField label="Transit Duration (hours)" name="transitDuration" value={data.transitDuration} onChange={handleInputChange} min={0.1} max={24} step={0.1} />
-        <InputField label="Planetary Radius (Earth radii)" name="planetaryRadius" value={data.planetaryRadius} onChange={handleInputChange} min={0.1} max={20} step={0.01} />
-        <InputField label="Stellar Temperature (K)" name="stellarTemperature" value={data.stellarTemperature} onChange={handleInputChange} min={2000} max={10000} step={10} />
+        <InputField label="Orbital Period (days)" name="orbitalPeriod" value={data.orbitalPeriod} onChange={handleInputChange} min={0.1} max={10000} step={0.1} error={errors.orbitalPeriod} />
+        <InputField label="Transit Duration (hours)" name="transitDuration" value={data.transitDuration} onChange={handleInputChange} min={0.1} max={24} step={0.1} error={errors.transitDuration} />
+        <InputField label="Planetary Radius (Earth radii)" name="planetaryRadius" value={data.planetaryRadius} onChange={handleInputChange} min={0.1} max={20} step={0.01} error={errors.planetaryRadius} />
+        <InputField label="Stellar Temperature (K)" name="stellarTemperature" value={data.stellarTemperature} onChange={handleInputChange} min={2000} max={10000} step={10} error={errors.stellarTemperature} />
     </div>
   );
   
@@ -156,6 +183,8 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
     </div>
   );
 
+  const isFormInvalid = activeTab === 'manual' && Object.values(errors).some(Boolean);
+
   return (
     <div className="bg-slate-800/50 border border-amber-500/20 rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-bold mb-4 text-amber-400">Data Input</h2>
@@ -168,14 +197,14 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
       </div>
       <button 
         onClick={onClassify}
-        className="w-full mt-8 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-lg"
+        disabled={isFormInvalid}
+        className="w-full mt-8 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-lg disabled:bg-slate-700 disabled:text-gray-500 disabled:cursor-not-allowed disabled:scale-100"
       >
-        Classify Exoplanet Candidate
+        {isFormInvalid ? 'Please correct the invalid fields' : 'Classify Exoplanet Candidate'}
       </button>
     </div>
   );
 };
-
 
 interface InputFieldProps {
     label: string;
@@ -185,25 +214,54 @@ interface InputFieldProps {
     min: number;
     max: number;
     step: number;
+    error?: string;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, min, max, step }) => (
+const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, min, max, step, error }) => (
     <div>
-        <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-2 flex justify-between">
-            <span>{label}</span>
-            <span className="text-amber-400 font-mono">{value}</span>
-        </label>
-        <input
-            type="range"
-            id={name}
-            name={name}
-            value={value}
-            onChange={onChange}
-            min={min}
-            max={max}
-            step={step}
-            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-        />
+        <div className="flex justify-between items-baseline mb-2">
+            <label htmlFor={name} className="block text-sm font-medium text-gray-300">
+                {label}
+            </label>
+            {error && (
+                <div id={`${name}-error`} role="alert" className="flex items-center gap-1.5 text-red-400 text-xs text-right animate-fade-in">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{error}</span>
+                </div>
+            )}
+        </div>
+        <div className="flex items-center gap-4">
+            <input
+                type="range"
+                id={`${name}-range`}
+                name={name}
+                value={value}
+                onChange={onChange}
+                min={min}
+                max={max}
+                step={step}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                aria-label={`${label} slider`}
+            />
+            <input
+                type="number"
+                id={name}
+                name={name}
+                value={value}
+                onChange={onChange}
+                min={min}
+                max={max}
+                step={step}
+                className={`w-32 text-center bg-slate-900/60 border rounded-lg py-1 px-2 font-mono text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${
+                    error ? 'border-red-500/70 text-red-400 ring-1 ring-red-500/50' : 'border-slate-600 focus:border-amber-500'
+                }`}
+                aria-label={`${label} value`}
+                aria-invalid={!!error}
+                aria-describedby={error ? `${name}-error` : undefined}
+            />
+        </div>
     </div>
 );
 

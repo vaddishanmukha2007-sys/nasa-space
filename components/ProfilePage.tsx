@@ -10,7 +10,7 @@ interface ProfilePageProps {
 const HistoryItemCard: React.FC<{ item: ClassificationHistoryItem }> = ({ item }) => {
   const resultDetails = CLASSIFICATION_DETAILS[item.result];
   return (
-    <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600/50 transform transition-transform hover:scale-[1.02] hover:border-amber-500/50">
+    <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600/50 transform transition-all duration-300 hover:scale-105 hover:border-amber-500/50 hover:bg-slate-700 hover:shadow-lg hover:shadow-amber-500/10 cursor-pointer">
       <div className="flex flex-wrap justify-between items-start gap-4">
         <div>
           <p className="text-xs text-gray-400">{item.timestamp}</p>
@@ -161,12 +161,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ history }) => {
           <div className="bg-slate-800/50 border border-amber-500/20 rounded-lg shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-4 text-amber-400">Classification History</h2>
             {history.length === 0 ? (
-              <div className="text-center py-16">
+              <div className="text-center py-16 animate-fade-in">
                 <p className="text-gray-400">No classifications recorded yet.</p>
                 <p className="text-sm text-gray-500 mt-2">Classify a candidate on the dashboard to see your history.</p>
               </div>
             ) : (
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 animate-fade-in">
                 {history.map(item => <HistoryItemCard key={item.id} item={item} />)}
               </div>
             )}

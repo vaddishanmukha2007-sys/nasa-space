@@ -42,3 +42,11 @@ export interface KnownExoplanet {
   data: ExoplanetData;
   fact: string;
 }
+
+export interface YearlyArchiveData {
+  year: number;
+  totalClassifications: number;
+  confirmedExoplanets: number;
+  planetaryCandidates: number;
+  falsePositives: number;
+}

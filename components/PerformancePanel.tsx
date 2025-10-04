@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+// Fix: Corrected typo in the import of MOCK_CONFUSION_MATRIX.
 import { MOCK_CONFUSION_MATRIX, MOCK_DETAILED_METRICS } from '../constants';
 import type { ModelMetrics } from '../types';
+import MetricsBarChart from './MetricsBarChart';
 
 interface PerformancePanelProps {
     isRetraining: boolean;
@@ -16,18 +18,42 @@ const RetrainingOverlay: React.FC = () => (
 
 
 const PerformancePanel: React.FC<PerformancePanelProps> = ({ isRetraining, metrics }) => {
+  const [highlightedMetric, setHighlightedMetric] = useState<string | null>(null);
+
+  const metricRelationships: { [key: string]: string[] } = {
+    // When a bar is hovered, which cards should highlight?
+    'Accuracy': ['True Positives', 'False Negatives', 'False Positives', 'True Negatives'],
+    'Precision': ['True Positives', 'False Positives'],
+    'Recall': ['True Positives', 'False Negatives'],
+    'F1-Score': ['True Positives', 'False Negatives', 'False Positives'],
+    // When a card is hovered, which bars should highlight?
+    'True Positives': ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
+    'False Negatives': ['Accuracy', 'Recall', 'F1-Score'],
+    'False Positives': ['Accuracy', 'Precision', 'F1-Score'],
+    'True Negatives': ['Accuracy'],
+  };
+
+  const detailedMetricsData = [
+    { label: "True Positives", value: MOCK_DETAILED_METRICS.truePositives, color: "text-green-400" },
+    { label: "False Negatives", value: MOCK_DETAILED_METRICS.falseNegatives, color: "text-orange-400" },
+    { label: "False Positives", value: MOCK_DETAILED_METRICS.falsePositives, color: "text-orange-400" },
+    { label: "True Negatives", value: MOCK_DETAILED_METRICS.trueNegatives, color: "text-green-400" }
+  ];
+
   return (
     <div className="bg-slate-800/50 border border-amber-500/20 rounded-lg shadow-lg p-6 relative">
       {isRetraining && <RetrainingOverlay />}
       <div className={isRetraining ? 'blur-sm transition-all duration-500' : 'transition-all duration-500'}>
         <h2 className="text-2xl font-bold mb-4 text-amber-400">Model Performance</h2>
         
-        <h3 className="text-lg font-semibold text-gray-300 mb-2">Overall Metrics</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <MetricCard label="Accuracy" value={metrics.accuracy} isPercentage={true} />
-          <MetricCard label="Precision" value={metrics.precision} isPercentage={true} />
-          <MetricCard label="Recall" value={metrics.recall} isPercentage={true} />
-          <MetricCard label="F1-Score" value={metrics.f1Score} isPercentage={true} />
+        <h3 className="text-lg font-semibold text-gray-300 mb-4">Overall Metrics</h3>
+        <div className="mb-6">
+            <MetricsBarChart
+              metrics={metrics}
+              highlightedMetric={highlightedMetric}
+              setHighlightedMetric={setHighlightedMetric}
+              relationships={metricRelationships}
+            />
         </div>
 
         <h3 className="text-lg font-semibold text-gray-300 mb-2 mt-8">
@@ -35,10 +61,21 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ isRetraining, metri
           <span className="text-sm text-gray-500 ml-2">(One-vs-Rest for "Confirmed" class)</span>
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <MetricCard label="True Positives" value={MOCK_DETAILED_METRICS.truePositives} color="text-green-400" />
-          <MetricCard label="False Negatives" value={MOCK_DETAILED_METRICS.falseNegatives} color="text-orange-400" />
-          <MetricCard label="False Positives" value={MOCK_DETAILED_METRICS.falsePositives} color="text-orange-400" />
-          <MetricCard label="True Negatives" value={MOCK_DETAILED_METRICS.trueNegatives} color="text-green-400" />
+          {detailedMetricsData.map(metric => {
+            const isHighlighted = highlightedMetric === metric.label || 
+                                (highlightedMetric && metricRelationships[highlightedMetric]?.includes(metric.label));
+            return (
+              <MetricCard 
+                key={metric.label}
+                label={metric.label}
+                value={metric.value} 
+                color={metric.color}
+                onMouseEnter={() => setHighlightedMetric(metric.label)}
+                onMouseLeave={() => setHighlightedMetric(null)}
+                isHighlighted={isHighlighted}
+              />
+            );
+          })}
         </div>
 
         <h3 className="text-lg font-semibold text-gray-300 mb-2 mt-8">Confusion Matrix</h3>
@@ -80,9 +117,20 @@ interface MetricCardProps {
     value: number;
     isPercentage?: boolean;
     color?: string;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
+    isHighlighted?: boolean;
 }
-const MetricCard: React.FC<MetricCardProps> = ({ label, value, isPercentage = false, color = 'text-amber-400' }) => (
-    <div className="bg-slate-700/50 p-4 rounded-lg text-center">
+const MetricCard: React.FC<MetricCardProps> = ({ label, value, isPercentage = false, color = 'text-amber-400', onMouseEnter, onMouseLeave, isHighlighted }) => (
+    <div
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        className={`bg-slate-700/50 p-4 rounded-lg text-center transition-all duration-300 transform cursor-pointer border-2 ${
+            isHighlighted
+                ? 'scale-110 bg-slate-700 border-amber-400 shadow-lg shadow-amber-500/20'
+                : 'border-transparent hover:scale-105 hover:bg-slate-700 hover:border-amber-500/40'
+        }`}
+    >
         <p className="text-sm text-gray-400">{label}</p>
         <p className={`text-2xl font-bold ${color}`}>
             {isPercentage ? `${(value * 100).toFixed(1)}%` : value.toLocaleString()}

@@ -3,8 +3,8 @@ import { UserIcon } from './Icons';
 import Logo from './Logo';
 
 interface HeaderProps {
-    activeView: 'dashboard' | 'profile';
-    setActiveView: (view: 'dashboard' | 'profile') => void;
+    activeView: 'dashboard' | 'profile' | 'archive';
+    setActiveView: (view: 'dashboard' | 'profile' | 'archive') => void;
 }
 
 const NavButton: React.FC<{title: string, isActive: boolean, onClick: () => void, icon?: React.ReactNode}> = ({ title, isActive, onClick, icon }) => (
@@ -35,10 +35,15 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView }) => {
             <nav className="flex items-center gap-4">
                 <NavButton title="Dashboard" isActive={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} />
                 <NavButton 
-                    title="Profile" 
+                    title="Profile & History" 
                     isActive={activeView === 'profile'} 
                     onClick={() => setActiveView('profile')}
                     icon={<UserIcon className="w-4 h-4" />}
+                />
+                <NavButton 
+                    title="Yearly Archive" 
+                    isActive={activeView === 'archive'} 
+                    onClick={() => setActiveView('archive')}
                 />
             </nav>
         </div>

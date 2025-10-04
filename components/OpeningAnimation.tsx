@@ -54,7 +54,8 @@ const OpeningAnimation: React.FC<OpeningAnimationProps> = ({ onAnimationEnd }) =
           opacity: 0;
           animation: 
             star-appear 2s ease-out forwards,
-            star-dim 2s 1.5s ease-in-out forwards;
+            star-dim 2s 1.5s ease-in-out forwards,
+            star-pulse 3s 2s ease-in-out infinite; /* New pulse animation */
         }
 
         .planet {
@@ -76,7 +77,9 @@ const OpeningAnimation: React.FC<OpeningAnimationProps> = ({ onAnimationEnd }) =
           text-shadow: 0 0 8px #f59e0b;
           opacity: 0;
           letter-spacing: 0.1em;
-          animation: title-appear 1.5s 2.8s ease-out forwards;
+          animation: 
+            title-appear 1.5s 2.8s ease-out forwards,
+            title-shimmer 2.5s 4.3s ease-in-out infinite; /* New shimmer animation */
         }
 
         @keyframes star-appear {
@@ -89,6 +92,24 @@ const OpeningAnimation: React.FC<OpeningAnimationProps> = ({ onAnimationEnd }) =
           50% { filter: brightness(0.85); }
         }
 
+        /* New keyframe for star pulse */
+        @keyframes star-pulse {
+          0%, 100% { 
+            transform: scale(1); 
+            box-shadow: 
+              0 0 20px 10px #fff,
+              0 0 40px 20px #f59e0b,
+              0 0 80px 40px #e11d4820;
+          }
+          50% { 
+            transform: scale(1.05); 
+            box-shadow: 
+              0 0 25px 15px #fff,
+              0 0 50px 25px #f59e0b,
+              0 0 90px 45px #e11d4820;
+          }
+        }
+
         @keyframes planet-transit {
           0% { transform: translateX(-150px) scale(0.9); opacity: 1; }
           50% { transform: translateX(0px) scale(1); }
@@ -98,6 +119,18 @@ const OpeningAnimation: React.FC<OpeningAnimationProps> = ({ onAnimationEnd }) =
         @keyframes title-appear {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* New keyframe for title shimmer */
+        @keyframes title-shimmer {
+          0%, 100% { 
+            text-shadow: 0 0 8px #f59e0b, 0 0 10px #fcd34d;
+            opacity: 1;
+          }
+          50% { 
+            text-shadow: 0 0 12px #f59e0b, 0 0 16px #fef08a;
+            opacity: 0.9;
+           }
         }
       `}</style>
       <div className="animation-container">

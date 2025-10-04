@@ -9,6 +9,7 @@ import SolarSystemAnimation from './components/SolarSystemAnimation';
 import LoginPage from './components/LoginPage';
 import ProfilePage from './components/ProfilePage';
 import OpeningAnimation from './components/OpeningAnimation';
+import ArchivePanel from './components/ArchivePanel';
 import { ExoplanetData, ClassificationResult, Hyperparameters, LightCurveDataPoint, ClassificationHistoryItem, ModelMetrics, KnownExoplanet } from './types';
 import { DEFAULT_EXOPLANET_DATA, DEFAULT_HYPERPARAMETERS, MOCK_MODEL_METRICS, KNOWN_EXOPLANETS } from './constants';
 import { classifyExoplanet } from './services/geminiService';
@@ -183,7 +184,7 @@ function lightCurveToImage(curveData: LightCurveDataPoint[]): Promise<string> {
         ctx.beginPath();
         curveData.forEach((point, index) => {
             const x = scaleX(point.time);
-            const y = scaleY(point.flux);
+            const y = scaleY(point.time);
             if (index === 0) {
                 ctx.moveTo(x, y);
             } else {
@@ -230,7 +231,7 @@ const App: React.FC = () => {
     const [isRetraining, setIsRetraining] = useState<boolean>(false);
     const [modelMetrics, setModelMetrics] = useState<ModelMetrics>(MOCK_MODEL_METRICS);
     const [lightCurveData, setLightCurveData] = useState<LightCurveDataPoint[]>([]);
-    const [activeView, setActiveView] = useState<'dashboard' | 'profile'>('dashboard');
+    const [activeView, setActiveView] = useState<'dashboard' | 'profile' | 'archive'>('dashboard');
     const [history, setHistory] = useState<ClassificationHistoryItem[]>([]);
     const [classificationError, setClassificationError] = useState<string | null>(null);
     const [crossReferenceResult, setCrossReferenceResult] = useState<{ name: string; fact: string } | null>(null);
@@ -334,8 +335,12 @@ const App: React.FC = () => {
                               <PerformancePanel isRetraining={isRetraining} metrics={modelMetrics} />
                           </div>
                       </main>
-                    ) : (
+                    ) : activeView === 'profile' ? (
                       <ProfilePage history={history} />
+                    ) : (
+                      <main className="mt-8 animate-fade-in">
+                        <ArchivePanel />
+                      </main>
                     )}
                 </div>
               )}

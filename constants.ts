@@ -1,4 +1,4 @@
-import { ExoplanetData, ClassificationResult, ModelMetrics, Hyperparameters, KnownExoplanet } from './types';
+import { ExoplanetData, ClassificationResult, ModelMetrics, Hyperparameters, KnownExoplanet, YearlyArchiveData } from './types';
 
 export const DEFAULT_EXOPLANET_DATA: ExoplanetData = {
   orbitalPeriod: 365.25,
@@ -106,4 +106,28 @@ export const KNOWN_EXOPLANETS: KnownExoplanet[] = [
     },
     fact: "The closest known exoplanet to Earth, orbiting our nearest stellar neighbor, Proxima Centauri."
   }
+];
+
+export const MOCK_ARCHIVE_DATA: YearlyArchiveData[] = [
+  {
+    year: 2023,
+    totalClassifications: 12543,
+    confirmedExoplanets: 312,
+    planetaryCandidates: 890,
+    falsePositives: 11341,
+  },
+  {
+    year: 2022,
+    totalClassifications: 10876,
+    confirmedExoplanets: 288,
+    planetaryCandidates: 754,
+    falsePositives: 9834,
+  },
+  {
+    year: 2021,
+    totalClassifications: 9531,
+    confirmedExoplanets: 251,
+    planetaryCandidates: 699,
+    falsePositives: 8581,
+  },
 ];

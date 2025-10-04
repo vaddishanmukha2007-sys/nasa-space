@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Hyperparameters } from '../types';
+import { DEFAULT_HYPERPARAMETERS } from '../constants';
 
 interface ControlPanelProps {
   hyperparameters: Hyperparameters;
@@ -17,40 +18,61 @@ const RetrainSpinner: React.FC = () => (
 
 
 const ControlPanel: React.FC<ControlPanelProps> = ({ hyperparameters, setHyperparameters, onRetrain, isRetraining }) => {
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHyperparameters({
-      ...hyperparameters,
-      [e.target.name]: parseFloat(e.target.value),
-    });
+  const handleHyperparameterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numericValue = parseFloat(value);
+    
+    // Prevent non-numeric values from updating the state
+    if (!isNaN(numericValue)) {
+      setHyperparameters({
+        ...hyperparameters,
+        [name]: numericValue,
+      });
+    }
+  };
+  
+  const handleReset = () => {
+    setHyperparameters(DEFAULT_HYPERPARAMETERS);
   };
 
   return (
     <div className="bg-slate-800/50 border border-amber-500/20 rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold mb-4 text-amber-400">Model Controls</h2>
+      <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-amber-400">Model Controls</h2>
+          <button
+            onClick={handleReset}
+            className="text-xs text-gray-400 hover:text-amber-400 border border-slate-600 px-3 py-1 rounded-md transition-colors duration-300 hover:border-amber-500/50"
+          >
+            Reset Defaults
+          </button>
+      </div>
       <p className="text-gray-400 text-sm mb-6">
         Adjust hyperparameters and retrain the model. (This is for demonstration purposes).
       </p>
       <div className="space-y-6">
-        <SliderField 
+        <HyperparameterField 
             label="Learning Rate" 
             name="learningRate" 
             value={hyperparameters.learningRate} 
-            onChange={handleSliderChange} 
+            onChange={handleHyperparameterChange} 
             min={0.001} max={0.1} step={0.001}
+            tooltip="Controls how quickly the model adapts. Lower values are slower but can be more precise."
         />
-        <SliderField 
+        <HyperparameterField 
             label="Max Depth" 
             name="maxDepth" 
             value={hyperparameters.maxDepth} 
-            onChange={handleSliderChange} 
+            onChange={handleHyperparameterChange} 
             min={2} max={15} step={1}
+            tooltip="The maximum depth of the decision trees. Deeper trees are more complex and can overfit."
         />
-        <SliderField 
+        <HyperparameterField 
             label="N Estimators" 
             name="nEstimators" 
             value={hyperparameters.nEstimators} 
-            onChange={handleSliderChange} 
+            onChange={handleHyperparameterChange} 
             min={50} max={500} step={10}
+            tooltip="The number of decision trees in the model. More trees can improve performance but increase training time."
         />
       </div>
        <button 
@@ -72,7 +94,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ hyperparameters, setHyperpa
 };
 
 
-interface SliderFieldProps {
+interface HyperparameterFieldProps {
     label: string;
     name: keyof Hyperparameters;
     value: number;
@@ -80,25 +102,55 @@ interface SliderFieldProps {
     min: number;
     max: number;
     step: number;
+    tooltip: string;
 }
 
-const SliderField: React.FC<SliderFieldProps> = ({ label, name, value, onChange, min, max, step }) => (
+const InfoIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+
+const HyperparameterField: React.FC<HyperparameterFieldProps> = ({ label, name, value, onChange, min, max, step, tooltip }) => (
     <div>
-        <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-2 flex justify-between">
-            <span>{label}</span>
-            <span className="text-amber-400 font-mono">{name === 'learningRate' ? value.toFixed(3) : value}</span>
-        </label>
-        <input
-            type="range"
-            id={name}
-            name={name}
-            value={value}
-            onChange={onChange}
-            min={min}
-            max={max}
-            step={step}
-            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-        />
+        <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center gap-2 group relative">
+                <label htmlFor={name} className="block text-sm font-medium text-gray-300">
+                    {label}
+                </label>
+                <InfoIcon className="w-4 h-4 text-gray-500" />
+                <div className="absolute bottom-full mb-2 w-64 p-2 bg-slate-900 border border-slate-700 text-gray-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+                    {tooltip}
+                </div>
+            </div>
+        </div>
+        <div className="flex items-center gap-4">
+            <input
+                type="range"
+                id={`${name}-range`}
+                name={name}
+                value={value}
+                onChange={onChange}
+                min={min}
+                max={max}
+                step={step}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                aria-label={`${label} slider`}
+            />
+            <input
+                type="number"
+                id={name}
+                name={name}
+                value={value}
+                onChange={onChange}
+                min={min}
+                max={max}
+                step={step}
+                className="w-28 text-center bg-slate-900/60 border border-slate-600 rounded-lg py-1 px-2 font-mono text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all duration-300"
+                aria-label={`${label} value`}
+            />
+        </div>
     </div>
 );
 
