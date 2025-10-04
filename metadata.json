@@ -1,0 +1,5 @@
+{
+  "name": "A World Away: Hunting for Exoplanets with AI",
+  "description": "An AI/ML system to automatically identify exoplanets from transit data. Users can upload data or enter characteristics manually to receive classification predictions, view model performance, and adjust hyperparameters.",
+  "requestFramePermissions": []
+}
