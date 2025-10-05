@@ -110,6 +110,20 @@ export const KNOWN_EXOPLANETS: KnownExoplanet[] = [
 
 export const MOCK_ARCHIVE_DATA: YearlyArchiveData[] = [
   {
+    year: 2025,
+    totalClassifications: 15500,
+    confirmedExoplanets: 380,
+    planetaryCandidates: 1100,
+    falsePositives: 14020,
+  },
+  {
+    year: 2024,
+    totalClassifications: 14000,
+    confirmedExoplanets: 350,
+    planetaryCandidates: 1000,
+    falsePositives: 12650,
+  },
+  {
     year: 2023,
     totalClassifications: 12543,
     confirmedExoplanets: 312,

@@ -115,14 +115,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const renderMainView = () => (
     <>
-      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-amber-400">Exoplanet Detector Login</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-amber-500 dark:text-amber-400">Exoplanet Detector Login</h2>
       <form onSubmit={handleSignIn} noValidate>
         <div className="mb-4">
-          <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="username">
+          <label className="block text-slate-700 dark:text-gray-300 text-sm font-bold mb-2" htmlFor="username">
             Username
           </label>
           <input
-            className={`shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-gray-200 bg-slate-900/60 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${errors.username ? 'border-red-500' : 'border-slate-600 focus:border-amber-500'}`}
+            className={`shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-slate-800 dark:text-gray-200 bg-slate-100 dark:bg-slate-900/60 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${errors.username ? 'border-red-500' : 'border-slate-400 dark:border-slate-600 focus:border-amber-500'}`}
             id="username"
             name="username"
             type="text"
@@ -137,11 +137,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           {errors.username && <p id="username-error" className="text-red-500 text-xs italic mt-2">{errors.username}</p>}
         </div>
         <div className="mb-6">
-          <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="password">
+          <label className="block text-slate-700 dark:text-gray-300 text-sm font-bold mb-2" htmlFor="password">
             Password
           </label>
           <input
-            className={`shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-gray-200 bg-slate-900/60 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${errors.password ? 'border-red-500' : 'border-slate-600 focus:border-amber-500'}`}
+            className={`shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-slate-800 dark:text-gray-200 bg-slate-100 dark:bg-slate-900/60 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${errors.password ? 'border-red-500' : 'border-slate-400 dark:border-slate-600 focus:border-amber-500'}`}
             id="password"
             name="password"
             type="password"
@@ -164,31 +164,31 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </button>
         </div>
         <div className="text-center">
-          <a className="inline-block align-baseline font-bold text-sm text-amber-400 hover:text-amber-300" href="#">
+          <a className="inline-block align-baseline font-bold text-sm text-amber-500 dark:text-amber-400 hover:text-amber-400 dark:hover:text-amber-300" href="#">
             Forgot Password?
           </a>
         </div>
       </form>
 
       <div className="text-center my-6">
-        <span className="text-sm text-gray-400">Don't have an account? </span>
-        <a href="#" className="inline-block align-baseline font-bold text-sm text-amber-400 hover:text-amber-300">
+        <span className="text-sm text-slate-500 dark:text-gray-400">Don't have an account? </span>
+        <a href="#" className="inline-block align-baseline font-bold text-sm text-amber-500 dark:text-amber-400 hover:text-amber-400 dark:hover:text-amber-300">
             Sign Up
         </a>
       </div>
 
       <div className="relative flex items-center">
-        <div className="flex-grow border-t border-slate-600"></div>
-        <span className="flex-shrink mx-4 text-gray-400 text-xs uppercase">Or</span>
-        <div className="flex-grow border-t border-slate-600"></div>
+        <div className="flex-grow border-t border-slate-400 dark:border-slate-600"></div>
+        <span className="flex-shrink mx-4 text-slate-500 dark:text-gray-400 text-xs uppercase">Or</span>
+        <div className="flex-grow border-t border-slate-400 dark:border-slate-600"></div>
       </div>
 
       <div className="space-y-3 mt-6">
-        <button onClick={onLogin} type="button" className="w-full inline-flex items-center justify-center py-2 px-4 border border-slate-600 shadow-sm text-sm font-medium rounded-lg text-gray-300 bg-slate-800/80 hover:bg-slate-700/90 hover:border-slate-500 transition-all duration-300 transform hover:scale-105">
+        <button onClick={onLogin} type="button" className="w-full inline-flex items-center justify-center py-2 px-4 border border-slate-400 dark:border-slate-600 shadow-sm text-sm font-medium rounded-lg text-slate-700 dark:text-gray-300 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/90 hover:border-slate-500 transition-all duration-300 transform hover:scale-105">
           <GoogleIcon className="w-5 h-5 mr-3" />
           Sign in with Google
         </button>
-        <button onClick={() => setView('phone')} type="button" className="w-full inline-flex items-center justify-center py-2 px-4 border border-slate-600 shadow-sm text-sm font-medium rounded-lg text-gray-300 bg-slate-800/80 hover:bg-slate-700/90 hover:border-slate-500 transition-all duration-300 transform hover:scale-105">
+        <button onClick={() => setView('phone')} type="button" className="w-full inline-flex items-center justify-center py-2 px-4 border border-slate-400 dark:border-slate-600 shadow-sm text-sm font-medium rounded-lg text-slate-700 dark:text-gray-300 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/90 hover:border-slate-500 transition-all duration-300 transform hover:scale-105">
           <PhoneIcon className="w-5 h-5 mr-3" />
           Sign in with Mobile Number
         </button>
@@ -198,18 +198,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const renderPhoneInputView = () => (
     <>
-      <button onClick={() => { setView('main'); setErrors({}); }} className="text-amber-400 hover:text-amber-300 text-sm font-bold mb-4">&larr; Back to Login</button>
+      <button onClick={() => { setView('main'); setErrors({}); }} className="text-amber-500 dark:text-amber-400 hover:text-amber-400 dark:hover:text-amber-300 text-sm font-bold mb-4">&larr; Back to Login</button>
       <div className="flex items-center justify-center mb-6">
-        <PhoneIcon className="w-6 h-6 mr-3 text-amber-400" />
-        <h2 className="text-xl font-bold text-center text-amber-400">Enter Mobile Number</h2>
+        <PhoneIcon className="w-6 h-6 mr-3 text-amber-500 dark:text-amber-400" />
+        <h2 className="text-xl font-bold text-center text-amber-500 dark:text-amber-400">Enter Mobile Number</h2>
       </div>
       <form onSubmit={handleSendCode} noValidate>
         <div className="mb-6">
-          <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="phone">
+          <label className="block text-slate-700 dark:text-gray-300 text-sm font-bold mb-2" htmlFor="phone">
             Mobile Number
           </label>
           <input
-            className={`shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-gray-200 bg-slate-900/60 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${errors.phoneNumber ? 'border-red-500' : 'border-slate-600 focus:border-amber-500'}`}
+            className={`shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-slate-800 dark:text-gray-200 bg-slate-100 dark:bg-slate-900/60 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${errors.phoneNumber ? 'border-red-500' : 'border-slate-400 dark:border-slate-600 focus:border-amber-500'}`}
             id="phone"
             name="phoneNumber"
             type="tel"
@@ -236,23 +236,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   
   const renderOtpInputView = () => (
     <>
-      <button onClick={() => setView('phone')} className="text-amber-400 hover:text-amber-300 text-sm font-bold mb-4">&larr; Change Number</button>
-      <h2 className="text-xl font-bold mb-2 text-center text-amber-400">Verify Your Number</h2>
-      <p className="text-center text-gray-400 text-sm mb-6">Enter the code sent to {phoneNumber}</p>
+      <button onClick={() => setView('phone')} className="text-amber-500 dark:text-amber-400 hover:text-amber-400 dark:hover:text-amber-300 text-sm font-bold mb-4">&larr; Change Number</button>
+      <h2 className="text-xl font-bold mb-2 text-center text-amber-500 dark:text-amber-400">Verify Your Number</h2>
+      <p className="text-center text-slate-500 dark:text-gray-400 text-sm mb-6">Enter the code sent to {phoneNumber}</p>
 
       {notification && (
-        <div className="p-3 mb-4 text-sm rounded-lg text-center bg-green-900/70 text-green-300 animate-slide-down-fade" role="alert">
+        <div className="p-3 mb-4 text-sm rounded-lg text-center bg-green-200 dark:bg-green-900/70 text-green-800 dark:text-green-300 animate-slide-down-fade" role="alert">
           {notification}
         </div>
       )}
 
       <form onSubmit={handleVerifyOtp}>
         <div className="mb-4">
-          <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="otp">
+          <label className="block text-slate-700 dark:text-gray-300 text-sm font-bold mb-2" htmlFor="otp">
             Verification Code
           </label>
           <input
-            className="shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-gray-200 bg-slate-900/60 border-slate-600 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all duration-300 text-center font-mono tracking-[.5em] text-lg"
+            className="shadow-inner appearance-none border rounded-lg w-full py-3 px-3 text-slate-800 dark:text-gray-200 bg-slate-100 dark:bg-slate-900/60 border-slate-400 dark:border-slate-600 leading-tight focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all duration-300 text-center font-mono tracking-[.5em] text-lg"
             id="otp"
             type="text"
             placeholder="_ _ _ _ _ _"
@@ -275,14 +275,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <button 
             onClick={handleResendCode}
             disabled={resendCooldown > 0}
-            className="inline-block align-baseline font-bold text-sm text-amber-400 hover:text-amber-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+            className="inline-block align-baseline font-bold text-sm text-amber-500 dark:text-amber-400 hover:text-amber-400 dark:hover:text-amber-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
         >
             Resend Code
         </button>
         {resendCooldown > 0 && (
-          <div className="mt-2 text-sm text-gray-400">
+          <div className="mt-2 text-sm text-slate-500 dark:text-gray-400">
             <p>You can request a new code in {resendCooldown}s</p>
-            <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
+            <div className="w-full bg-slate-300 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
               <div 
                 className="bg-amber-500 h-1.5 rounded-full" 
                 style={{ 
@@ -317,7 +317,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     `}</style>
     <div className="relative flex items-center justify-center min-h-screen overflow-hidden p-4">
       <LargeSolarSystem />
-      <div className="relative z-10 p-6 sm:p-8 bg-slate-900/70 border border-amber-500/30 rounded-lg shadow-2xl w-full max-w-sm animate-fade-in-form backdrop-blur-sm">
+      <div className="relative z-10 p-6 sm:p-8 bg-white/70 dark:bg-slate-900/70 border border-amber-500/30 rounded-lg shadow-2xl w-full max-w-sm animate-fade-in-form backdrop-blur-sm">
         {view === 'main' && renderMainView()}
         {view === 'phone' && renderPhoneInputView()}
         {view === 'otp' && renderOtpInputView()}

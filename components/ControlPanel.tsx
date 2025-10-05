@@ -36,17 +36,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ hyperparameters, setHyperpa
   };
 
   return (
-    <div className="bg-slate-800/50 border border-amber-500/20 rounded-lg shadow-lg p-6">
+    <div className="bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-amber-500/20 rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-amber-400">Model Controls</h2>
+          <h2 className="text-2xl font-bold text-amber-500 dark:text-amber-400">Model Controls</h2>
           <button
             onClick={handleReset}
-            className="text-xs text-gray-400 hover:text-amber-400 border border-slate-600 px-3 py-1 rounded-md transition-colors duration-300 hover:border-amber-500/50"
+            className="text-xs text-slate-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 border border-slate-400 dark:border-slate-600 px-3 py-1 rounded-md transition-colors duration-300 hover:border-amber-500/50"
           >
             Reset Defaults
           </button>
       </div>
-      <p className="text-gray-400 text-sm mb-6">
+      <p className="text-slate-600 dark:text-gray-400 text-sm mb-6">
         Adjust hyperparameters and retrain the model. (This is for demonstration purposes).
       </p>
       <div className="space-y-6">
@@ -116,11 +116,11 @@ const HyperparameterField: React.FC<HyperparameterFieldProps> = ({ label, name, 
     <div>
         <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2 group relative">
-                <label htmlFor={name} className="block text-sm font-medium text-gray-300">
+                <label htmlFor={name} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
                     {label}
                 </label>
-                <InfoIcon className="w-4 h-4 text-gray-500" />
-                <div className="absolute bottom-full mb-2 w-64 p-2 bg-slate-900 border border-slate-700 text-gray-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+                <InfoIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <div className="absolute bottom-full mb-2 w-64 p-2 bg-slate-800 dark:bg-slate-900 border border-slate-600 dark:border-slate-700 text-gray-200 dark:text-gray-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
                     {tooltip}
                 </div>
             </div>
@@ -135,7 +135,7 @@ const HyperparameterField: React.FC<HyperparameterFieldProps> = ({ label, name, 
                 min={min}
                 max={max}
                 step={step}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-slate-300 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
                 aria-label={`${label} slider`}
             />
             <input
@@ -147,7 +147,7 @@ const HyperparameterField: React.FC<HyperparameterFieldProps> = ({ label, name, 
                 min={min}
                 max={max}
                 step={step}
-                className="w-28 text-center bg-slate-900/60 border border-slate-600 rounded-lg py-1 px-2 font-mono text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all duration-300"
+                className="w-28 text-center bg-slate-100 dark:bg-slate-900/60 border border-slate-400 dark:border-slate-600 rounded-lg py-1 px-2 font-mono text-amber-600 dark:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all duration-300"
                 aria-label={`${label} value`}
             />
         </div>

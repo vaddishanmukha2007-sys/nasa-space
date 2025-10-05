@@ -1,10 +1,11 @@
 
+
 import { ExoplanetData, ClassificationResult } from '../types';
 // Fix: Import GoogleGenAI from the correct package
 import { GoogleGenAI } from "@google/genai";
 
 // Fix: Replaced mock function with a real Gemini API call.
-export const classifyExoplanet = async (data: ExoplanetData, lightCurveImageBase64: string): Promise<ClassificationResult> => {
+export const classifyExoplanet = async (data: ExoplanetData, lightCurveImageDataUrl: string): Promise<ClassificationResult> => {
   console.log("Classifying with Gemini using multimodal image analysis for:", data);
 
   const prompt = `
@@ -28,10 +29,15 @@ export const classifyExoplanet = async (data: ExoplanetData, lightCurveImageBase
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
+    // The canvas toDataURL() method returns a data URL string.
+    // The Gemini API expects only the raw base64 encoded data.
+    // We need to strip the prefix "data:image/jpeg;base64,".
+    const base64Data = lightCurveImageDataUrl.split(',')[1];
+    
     const imagePart = {
       inlineData: {
         mimeType: 'image/jpeg',
-        data: lightCurveImageBase64,
+        data: base64Data,
       },
     };
     const textPart = { text: prompt };

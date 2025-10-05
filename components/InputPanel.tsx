@@ -1,6 +1,8 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, useEffect } from 'react';
 import type { ExoplanetData } from '../types';
 import { parseExoplanetCsv, previewExoplanetCsv } from '../utils/csvParser';
+import { useSettings } from '../contexts/SettingsContext';
+import { getUnitConfig, convertToDisplayValue, convertFromDisplayValue } from '../utils/units';
 
 interface InputPanelProps {
   data: ExoplanetData;
@@ -14,18 +16,47 @@ const UploadIcon: React.FC<{className?: string}> = ({className}) => (
     </svg>
 );
 
+const InfoIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
 
 const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) => {
+  const { units } = useSettings();
+  const unitConfig = getUnitConfig(units);
+
   const [activeTab, setActiveTab] = useState<'manual' | 'upload'>('manual');
   const [fileName, setFileName] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [csvPreview, setCsvPreview] = useState<ExoplanetData[] | null>(null);
   const [rawCsvContent, setRawCsvContent] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof ExoplanetData, string>>>({});
+  
+  // Local state for values displayed in inputs, reflecting user's unit preference
+  const [displayValues, setDisplayValues] = useState({
+      orbitalPeriod: 0,
+      transitDuration: 0,
+      planetaryRadius: 0,
+      stellarTemperature: 0,
+  });
 
-  const validateField = (name: keyof ExoplanetData, value: number, config: { min: number; max: number; }): string | undefined => {
+  // Effect to update display values when base data or units change
+  useEffect(() => {
+    setDisplayValues({
+        orbitalPeriod: convertToDisplayValue(data.orbitalPeriod, units.orbitalPeriod),
+        transitDuration: data.transitDuration, // Duration is always in hours
+        planetaryRadius: convertToDisplayValue(data.planetaryRadius, units.planetaryRadius),
+        stellarTemperature: convertToDisplayValue(data.stellarTemperature, units.stellarTemperature),
+    });
+  }, [data, units]);
+
+
+  const validateField = (name: keyof ExoplanetData, value: number): string | undefined => {
+    const config = (unitConfig as any)[name];
     if (value < config.min || value > config.max) {
-      return `Must be between ${config.min} and ${config.max}.`;
+      return `Must be between ${config.min.toFixed(2)} and ${config.max.toFixed(2)}.`;
     }
     return undefined;
   };
@@ -34,24 +65,23 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
     const name = e.target.name as keyof ExoplanetData;
     const value = e.target.value;
     const numericValue = value === '' ? NaN : parseFloat(value);
+    
+    // Update local display state
+    setDisplayValues(prev => ({ ...prev, [name]: numericValue }));
 
-    // Prevent non-numeric values from updating the state, which would crash the range slider
     if (isNaN(numericValue)) {
       setErrors({ ...errors, [name]: 'Please enter a valid number.' });
-      return; // Do not update data state
+      return;
     }
 
-    const updatedData = { ...data, [name]: numericValue };
-    setData(updatedData);
+    // Convert from display unit back to base unit and update parent state
+    let baseValue = numericValue;
+    if (name !== 'transitDuration') { // Assuming transitDuration is not converted
+        baseValue = convertFromDisplayValue(numericValue, units[name as keyof typeof units]);
+    }
+    setData(prevData => ({ ...prevData, [name]: baseValue }));
 
-    // Validate the field that changed
-    const fieldConfigs = {
-      orbitalPeriod: { min: 0.1, max: 10000 },
-      transitDuration: { min: 0.1, max: 24 },
-      planetaryRadius: { min: 0.1, max: 20 },
-      stellarTemperature: { min: 2000, max: 10000 },
-    };
-    const error = validateField(name, numericValue, fieldConfigs[name]);
+    const error = validateField(name, numericValue);
     setErrors({ ...errors, [name]: error });
   };
   
@@ -118,22 +148,62 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
 
   const renderManualInput = () => (
     <div className="space-y-6 animate-fade-in">
-        <InputField label="Orbital Period (days)" name="orbitalPeriod" value={data.orbitalPeriod} onChange={handleInputChange} min={0.1} max={10000} step={0.1} error={errors.orbitalPeriod} />
-        <InputField label="Transit Duration (hours)" name="transitDuration" value={data.transitDuration} onChange={handleInputChange} min={0.1} max={24} step={0.1} error={errors.transitDuration} />
-        <InputField label="Planetary Radius (Earth radii)" name="planetaryRadius" value={data.planetaryRadius} onChange={handleInputChange} min={0.1} max={20} step={0.01} error={errors.planetaryRadius} />
-        <InputField label="Stellar Temperature (K)" name="stellarTemperature" value={data.stellarTemperature} onChange={handleInputChange} min={2000} max={10000} step={10} error={errors.stellarTemperature} />
+        <InputField 
+            label={`Orbital Period (${unitConfig.orbitalPeriod.label})`} 
+            name="orbitalPeriod" 
+            value={displayValues.orbitalPeriod} 
+            onChange={handleInputChange} 
+            min={unitConfig.orbitalPeriod.min} 
+            max={unitConfig.orbitalPeriod.max} 
+            step={unitConfig.orbitalPeriod.step} 
+            error={errors.orbitalPeriod}
+            tooltip="The time it takes for the planet to complete one orbit around its star. Affects the frequency of transits."
+        />
+        <InputField 
+            label={`Transit Duration (${unitConfig.transitDuration.label})`} 
+            name="transitDuration" 
+            value={displayValues.transitDuration} 
+            onChange={handleInputChange} 
+            min={unitConfig.transitDuration.min} 
+            max={unitConfig.transitDuration.max} 
+            step={unitConfig.transitDuration.step} 
+            error={errors.transitDuration} 
+            tooltip="The length of time the star's light is dimmed during the planet's transit. Influenced by orbital speed and star size."
+        />
+        <InputField 
+            label={`Planetary Radius (${unitConfig.planetaryRadius.label})`} 
+            name="planetaryRadius" 
+            value={displayValues.planetaryRadius} 
+            onChange={handleInputChange} 
+            min={unitConfig.planetaryRadius.min} 
+            max={unitConfig.planetaryRadius.max} 
+            step={unitConfig.planetaryRadius.step} 
+            error={errors.planetaryRadius} 
+            tooltip="The size of the planet. Larger planets block more starlight, creating a deeper transit dip in the light curve."
+        />
+        <InputField 
+            label={`Stellar Temperature (${unitConfig.stellarTemperature.label})`} 
+            name="stellarTemperature" 
+            value={displayValues.stellarTemperature} 
+            onChange={handleInputChange} 
+            min={unitConfig.stellarTemperature.min} 
+            max={unitConfig.stellarTemperature.max} 
+            step={unitConfig.stellarTemperature.step} 
+            error={errors.stellarTemperature} 
+            tooltip="The surface temperature of the host star. This helps determine the star's type and the 'habitable zone'."
+        />
     </div>
   );
   
   const renderFileUpload = () => (
-    <div className="flex flex-col items-center justify-center min-h-[300px] p-4 border-2 border-dashed border-slate-600 rounded-lg animate-fade-in">
+    <div className="flex flex-col items-center justify-center min-h-[300px] p-4 border-2 border-dashed border-slate-400 dark:border-slate-600 rounded-lg animate-fade-in">
         {csvPreview ? (
             <div className="w-full text-center">
-                <h3 className="text-lg font-semibold text-amber-400 mb-2">File Preview</h3>
-                <p className="text-sm text-gray-400 mb-4">Confirm data from <span className="font-semibold text-amber-300">{fileName}</span></p>
-                <div className="overflow-x-auto rounded-lg border border-slate-700 max-h-48">
+                <h3 className="text-lg font-semibold text-amber-500 dark:text-amber-400 mb-2">File Preview</h3>
+                <p className="text-sm text-slate-500 dark:text-gray-400 mb-4">Confirm data from <span className="font-semibold text-amber-600 dark:text-amber-300">{fileName}</span></p>
+                <div className="overflow-x-auto rounded-lg border border-slate-300 dark:border-slate-700 max-h-48">
                     <table className="w-full text-xs text-left">
-                        <thead className="bg-slate-700/50 text-gray-300 uppercase tracking-wider">
+                        <thead className="bg-slate-200 dark:bg-slate-700/50 text-slate-600 dark:text-gray-300 uppercase tracking-wider">
                             <tr>
                                 <th className="p-2">Period (d)</th>
                                 <th className="p-2">Duration (h)</th>
@@ -141,9 +211,9 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
                                 <th className="p-2">Temp (K)</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-slate-800/50 text-gray-200">
+                        <tbody className="bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-gray-200">
                             {csvPreview.map((row, index) => (
-                                <tr key={index} className="border-t border-slate-700">
+                                <tr key={index} className="border-t border-slate-300 dark:border-slate-700">
                                     <td className="p-2 font-mono">{row.orbitalPeriod}</td>
                                     <td className="p-2 font-mono">{row.transitDuration}</td>
                                     <td className="p-2 font-mono">{row.planetaryRadius}</td>
@@ -157,7 +227,7 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
                     <button onClick={handleConfirmLoad} className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-2 px-4 rounded-lg transition-colors duration-300">
                         Load First Row
                     </button>
-                    <button onClick={handleCancelPreview} className="flex-1 bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                    <button onClick={handleCancelPreview} className="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
                         Cancel
                     </button>
                 </div>
@@ -165,16 +235,16 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
         ) : (
             <>
                 <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center text-center">
-                    <UploadIcon className="w-12 h-12 text-amber-400 mb-4" />
-                    <span className="font-semibold text-amber-400">Click to upload</span>
-                    <p className="text-gray-400 text-xs mt-2">
+                    <UploadIcon className="w-12 h-12 text-amber-500 dark:text-amber-400 mb-4" />
+                    <span className="font-semibold text-amber-500 dark:text-amber-400">Click to upload</span>
+                    <p className="text-slate-500 dark:text-gray-400 text-xs mt-2">
                         CSV with headers: <br />
-                        <code className="text-amber-300">orbitalPeriod, transitDuration, planetaryRadius, stellarTemperature</code>
+                        <code className="text-amber-600 dark:text-amber-300">orbitalPeriod, transitDuration, planetaryRadius, stellarTemperature</code>
                     </p>
                     <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".csv,.txt" />
                 </label>
                 {uploadError && (
-                  <div className="mt-4 text-sm w-full text-red-400 bg-red-900/50 p-3 rounded-lg border border-red-500/50 text-center">
+                  <div className="mt-4 text-sm w-full text-red-500 dark:text-red-400 bg-red-200 dark:bg-red-900/50 p-3 rounded-lg border border-red-400 dark:border-red-500/50 text-center">
                     <span className="font-bold">Upload Failed:</span> {uploadError}
                   </div>
                 )}
@@ -186,9 +256,9 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
   const isFormInvalid = activeTab === 'manual' && Object.values(errors).some(Boolean);
 
   return (
-    <div className="bg-slate-800/50 border border-amber-500/20 rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold mb-4 text-amber-400">Data Input</h2>
-      <div className="flex border-b border-slate-700 mb-6">
+    <div className="bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-amber-500/20 rounded-lg shadow-lg p-6">
+      <h2 className="text-2xl font-bold mb-4 text-amber-500 dark:text-amber-400">Data Input</h2>
+      <div className="flex border-b border-slate-300 dark:border-slate-700 mb-6">
         <TabButton title="Manual Input" isActive={activeTab === 'manual'} onClick={() => setActiveTab('manual')} />
         <TabButton title="File Upload" isActive={activeTab === 'upload'} onClick={() => setActiveTab('upload')} />
       </div>
@@ -198,7 +268,7 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
       <button 
         onClick={onClassify}
         disabled={isFormInvalid}
-        className="w-full mt-8 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-lg disabled:bg-slate-700 disabled:text-gray-500 disabled:cursor-not-allowed disabled:scale-100"
+        className="w-full mt-8 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-lg disabled:bg-slate-400 dark:disabled:bg-slate-700 disabled:text-gray-600 dark:disabled:text-gray-500 disabled:cursor-not-allowed disabled:scale-100"
       >
         {isFormInvalid ? 'Please correct the invalid fields' : 'Classify Exoplanet Candidate'}
       </button>
@@ -215,16 +285,23 @@ interface InputFieldProps {
     max: number;
     step: number;
     error?: string;
+    tooltip: string;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, min, max, step, error }) => (
+const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, min, max, step, error, tooltip }) => (
     <div>
         <div className="flex justify-between items-baseline mb-2">
-            <label htmlFor={name} className="block text-sm font-medium text-gray-300">
-                {label}
-            </label>
+            <div className="flex items-center gap-2 group relative">
+                <label htmlFor={name} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
+                    {label}
+                </label>
+                <InfoIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+                <div className="absolute bottom-full mb-2 w-72 p-2 bg-slate-800 dark:bg-slate-900 border border-slate-600 dark:border-slate-700 text-gray-200 dark:text-gray-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+                    {tooltip}
+                </div>
+            </div>
             {error && (
-                <div id={`${name}-error`} role="alert" className="flex items-center gap-1.5 text-red-400 text-xs text-right animate-fade-in">
+                <div id={`${name}-error`} role="alert" className="flex items-center gap-1.5 text-red-500 dark:text-red-400 text-xs text-right animate-fade-in">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -242,7 +319,7 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, m
                 min={min}
                 max={max}
                 step={step}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-slate-300 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
                 aria-label={`${label} slider`}
             />
             <input
@@ -254,8 +331,8 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, m
                 min={min}
                 max={max}
                 step={step}
-                className={`w-32 text-center bg-slate-900/60 border rounded-lg py-1 px-2 font-mono text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${
-                    error ? 'border-red-500/70 text-red-400 ring-1 ring-red-500/50' : 'border-slate-600 focus:border-amber-500'
+                className={`w-32 text-center bg-slate-100 dark:bg-slate-900/60 border rounded-lg py-1 px-2 font-mono text-amber-600 dark:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300 ${
+                    error ? 'border-red-500/70 text-red-500 dark:text-red-400 ring-1 ring-red-500/50' : 'border-slate-400 dark:border-slate-600 focus:border-amber-500'
                 }`}
                 aria-label={`${label} value`}
                 aria-invalid={!!error}
@@ -274,7 +351,7 @@ const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onClick }) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 -mb-px text-sm font-medium border-b-2 transition-colors duration-200 ${
-            isActive ? 'border-amber-400 text-amber-400' : 'border-transparent text-gray-400 hover:text-white'
+            isActive ? 'border-amber-500 dark:border-amber-400 text-amber-600 dark:text-amber-400' : 'border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
         }`}
     >
         {title}
