@@ -1,29 +1,30 @@
 // Fix: Define all necessary types for the application.
 
 export interface ExoplanetData {
+  name: string;
   orbitalPeriod: number;      // Base unit: days
   transitDuration: number;    // Base unit: hours
   planetaryRadius: number;    // Base unit: Earth radii
   stellarTemperature: number; // Base unit: Kelvin
 }
 
+export interface Hyperparameters {
+  learningRate: number;
+  epochs: number;
+  batchSize: number;
+}
+
+export interface ModelMetrics {
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1Score: number;
+}
+
 export enum ClassificationResult {
   CONFIRMED_EXOPLANET = 'CONFIRMED_EXOPLANET',
   PLANETARY_CANDIDATE = 'PLANETARY_CANDIDATE',
   FALSE_POSITIVE = 'FALSE_POSITIVE',
-}
-
-export interface Hyperparameters {
-  learningRate: number;
-  maxDepth: number;
-  nEstimators: number;
-}
-
-export interface ModelMetrics {
-  accuracy: number;
-  precision: number;
-  recall: number;
-  f1Score: number;
 }
 
 export interface ClassificationHistoryItem {
@@ -43,7 +44,6 @@ export interface YearlyArchiveData {
 
 // New types for NASA Cross-Reference Feature
 export interface NasaExoplanet extends ExoplanetData {
-  name: string;
   discoveryYear: number;
 }
 

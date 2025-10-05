@@ -1,31 +1,42 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { ExoplanetData, Hyperparameters, ModelMetrics, ClassificationResult, ClassificationHistoryItem, CrossReferenceResult } from './types.ts';
-import { DEFAULT_EXOPLANET_DATA, DEFAULT_HYPERPARAMETERS, MOCK_MODEL_METRICS, RECENT_NASA_EXOPLANETS } from './constants.ts';
-import { classifyExoplanet } from './services/geminiService';
-import Header from './components/Header';
-import InputPanel from './components/InputPanel';
-import ControlPanel from './components/ControlPanel';
-import ResultsPanel from './components/ResultsPanel';
-import PerformancePanel from './components/PerformancePanel';
-import OpeningAnimation from './components/OpeningAnimation';
-import LoginPage from './components/LoginPage';
-import ProfilePage from './components/ProfilePage';
-import ArchivePanel from './components/ArchivePanel';
-import SettingsModal from './components/SettingsModal';
-import ChatButton from './components/ChatButton';
-import ChatModal from './components/ChatModal';
-import { useSettings } from './contexts/SettingsContext';
+// Fix: Add file extension to resolve module.
+import type { ExoplanetData, ClassificationResult, ClassificationHistoryItem, CrossReferenceResult, Hyperparameters, ModelMetrics } from './types.ts';
+// Fix: Add file extension to resolve module.
+import { DEFAULT_EXOPLANET_DATA, RECENT_NASA_EXOPLANETS, DEFAULT_HYPERPARAMETERS, MOCK_MODEL_METRICS } from './constants.ts';
+// Fix: Add file extension to resolve module.
+import { classifyExoplanet } from './services/geminiService.ts';
+// Fix: Add file extension to resolve module.
+import Header from './components/Header.tsx';
+// Fix: Add file extension to resolve module.
+import InputPanel from './components/InputPanel.tsx';
+// Fix: Add file extension to resolve module.
+import ResultsPanel from './components/ResultsPanel.tsx';
+// Fix: Add file extension to resolve module.
+import OpeningAnimation from './components/OpeningAnimation.tsx';
+// Fix: Add file extension to resolve module.
+import LoginPage from './components/LoginPage.tsx';
+// Fix: Add file extension to resolve module.
+import ProfilePage from './components/ProfilePage.tsx';
+// Fix: Add file extension to resolve module.
+import ArchivePanel from './components/ArchivePanel.tsx';
+// Fix: Add file extension to resolve module.
+import SettingsModal from './components/SettingsModal.tsx';
+// Fix: Add file extension to resolve module.
+import ChatButton from './components/ChatButton.tsx';
+// Fix: Add file extension to resolve module.
+import ChatModal from './components/ChatModal.tsx';
+// Fix: Add file extension to resolve module.
+import { useSettings } from './contexts/SettingsContext.tsx';
+import FascinatingFact from './components/FascinatingFact.tsx';
+import VisualsPanel from './components/VisualsPanel.tsx';
 
 const App: React.FC = () => {
   const [showAnimation, setShowAnimation] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   const [data, setData] = useState<ExoplanetData>(DEFAULT_EXOPLANET_DATA);
-  const [hyperparameters, setHyperparameters] = useState<Hyperparameters>(DEFAULT_HYPERPARAMETERS);
-  const [metrics, setMetrics] = useState<ModelMetrics>(MOCK_MODEL_METRICS);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isRetraining, setIsRetraining] = useState(false);
   const [classificationResult, setClassificationResult] = useState<ClassificationResult | null>(null);
   const [crossReferenceResult, setCrossReferenceResult] = useState<CrossReferenceResult>(null);
   const [history, setHistory] = useState<ClassificationHistoryItem[]>([]);
@@ -34,6 +45,10 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   
+  const [hyperparameters, setHyperparameters] = useState<Hyperparameters>(DEFAULT_HYPERPARAMETERS);
+  const [metrics, setMetrics] = useState<ModelMetrics>(MOCK_MODEL_METRICS);
+  const [isRetraining, setIsRetraining] = useState(false);
+
   const { theme } = useSettings();
   const lightCurveCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -164,25 +179,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleRetrain = () => {
-    setIsRetraining(true);
-    // Simulate retraining time
-    setTimeout(() => {
-      // Simulate slight metric changes after retraining
-      const newMetrics = {
-        accuracy: Math.min(0.99, MOCK_MODEL_METRICS.accuracy + (Math.random() - 0.5) * 0.02),
-        precision: Math.min(0.99, MOCK_MODEL_METRICS.precision + (Math.random() - 0.5) * 0.02),
-        recall: Math.min(0.99, MOCK_MODEL_METRICS.recall + (Math.random() - 0.5) * 0.02),
-        f1Score: Math.min(0.99, MOCK_MODEL_METRICS.f1Score + (Math.random() - 0.5) * 0.02),
-      };
-      setMetrics(newMetrics);
-      setIsRetraining(false);
-    }, 2500);
-  };
-
   const handleReset = () => {
     setData(DEFAULT_EXOPLANET_DATA);
-    setHyperparameters(DEFAULT_HYPERPARAMETERS);
     setClassificationResult(null);
     setCrossReferenceResult(null);
     setIsLoading(false);
@@ -190,6 +188,23 @@ const App: React.FC = () => {
   
   const handleLogin = () => {
       setIsLoggedIn(true);
+  };
+
+  const handleRetrain = () => {
+    setIsRetraining(true);
+    console.log("Retraining with hyperparameters:", hyperparameters);
+    // Simulate a network request for retraining
+    setTimeout(() => {
+        // Simulate receiving new metrics that are slightly different
+        const newMetrics: ModelMetrics = {
+            accuracy: Math.min(0.99, metrics.accuracy + (Math.random() - 0.4) * 0.02),
+            precision: Math.min(0.99, metrics.precision + (Math.random() - 0.4) * 0.02),
+            recall: Math.min(0.99, metrics.recall + (Math.random() - 0.4) * 0.02),
+            f1Score: Math.min(0.99, metrics.f1Score + (Math.random() - 0.4) * 0.02),
+        };
+        setMetrics(newMetrics);
+        setIsRetraining(false);
+    }, 2500); // Simulate 2.5 second training time
   };
 
   if (showAnimation) {
@@ -209,17 +224,25 @@ const App: React.FC = () => {
           case 'dashboard':
           default:
               return (
-                <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 animate-fade-in">
-                  <div className="lg:col-span-1 space-y-8">
-                    <InputPanel data={data} setData={setData} onClassify={handleClassify} />
-                    <ControlPanel 
-                      hyperparameters={hyperparameters} 
-                      setHyperparameters={setHyperparameters} 
-                      onRetrain={handleRetrain} 
-                      isRetraining={isRetraining} 
+                <main className="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-8 animate-fade-in">
+                  {/* Left Column (Inputs & Quick Info) */}
+                  <div className="lg:col-span-2 space-y-8">
+                    <InputPanel
+                      data={data}
+                      setData={setData}
+                      onClassify={handleClassify}
+                      hyperparameters={hyperparameters}
+                      setHyperparameters={setHyperparameters}
+                      onRetrain={handleRetrain}
+                      isRetraining={isRetraining}
+                    />
+                     <FascinatingFact 
+                      data={data}
+                      classificationResult={classificationResult}
                     />
                   </div>
-                  <div className="lg:col-span-2 space-y-8">
+                   {/* Right Column (Results & Visualizations) */}
+                  <div className="lg:col-span-3 space-y-8">
                     <ResultsPanel
                       isLoading={isLoading}
                       classificationResult={classificationResult}
@@ -227,7 +250,7 @@ const App: React.FC = () => {
                       crossReferenceResult={crossReferenceResult}
                       onReset={handleReset}
                     />
-                    <PerformancePanel isRetraining={isRetraining} metrics={metrics} />
+                    <VisualsPanel data={data} metrics={metrics} />
                   </div>
                 </main>
               );

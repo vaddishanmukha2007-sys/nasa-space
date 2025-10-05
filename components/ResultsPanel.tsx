@@ -56,6 +56,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ isLoading, classificationRe
 
         return (
             <div className="animate-fade-in">
+                <p className="text-center text-slate-500 dark:text-gray-400 text-sm">Results for</p>
+                <h2 className="text-2xl font-bold text-center mb-4 text-slate-800 dark:text-gray-200 truncate" title={data.name}>{data.name}</h2>
+
                 <div className={`p-4 rounded-lg border-2 text-center ${resultDetails.color}`}>
                     <p className="text-sm font-semibold uppercase tracking-wider">Classification Result</p>
                     <h3 className="text-3xl font-bold mt-1">{resultDetails.label}</h3>

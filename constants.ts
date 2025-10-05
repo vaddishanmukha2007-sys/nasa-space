@@ -1,8 +1,9 @@
 // Fix: Define all necessary constants for the application.
 
-import { Hyperparameters, ModelMetrics, ClassificationResult, YearlyArchiveData, ExoplanetData, NasaExoplanet } from './types.ts';
+import { ClassificationResult, YearlyArchiveData, ExoplanetData, NasaExoplanet, Hyperparameters, ModelMetrics } from './types.ts';
 
 export const DEFAULT_EXOPLANET_DATA: ExoplanetData = {
+  name: 'Kepler-186 f (Default)',
   orbitalPeriod: 365.25, // days
   transitDuration: 4,    // hours
   planetaryRadius: 1.0,  // Earth radii
@@ -10,33 +11,30 @@ export const DEFAULT_EXOPLANET_DATA: ExoplanetData = {
 };
 
 export const DEFAULT_HYPERPARAMETERS: Hyperparameters = {
-  learningRate: 0.01,
-  maxDepth: 5,
-  nEstimators: 100,
+  learningRate: 0.001,
+  epochs: 50,
+  batchSize: 32,
 };
 
 export const MOCK_MODEL_METRICS: ModelMetrics = {
-  accuracy: 0.96,
-  precision: 0.92,
-  recall: 0.95,
-  f1Score: 0.93,
+  accuracy: 0.963,
+  precision: 0.941,
+  recall: 0.975,
+  f1Score: 0.958,
 };
 
-export const MOCK_DETAILED_METRICS = {
-    truePositives: 450,
-    falseNegatives: 25,
-    falsePositives: 40,
-    trueNegatives: 9485,
-};
+export const MOCK_DETAILED_METRICS = [
+    { name: 'Accuracy', value: MOCK_MODEL_METRICS.accuracy, fill: '#8884d8' },
+    { name: 'Precision', value: MOCK_MODEL_METRICS.precision, fill: '#82ca9d' },
+    { name: 'Recall', value: MOCK_MODEL_METRICS.recall, fill: '#ffc658' },
+    { name: 'F1-Score', value: MOCK_MODEL_METRICS.f1Score, fill: '#ff8042' },
+];
 
-export const MOCK_CONFUSION_MATRIX = {
-  labels: ['Confirmed', 'Candidate', 'False Positive'],
-  values: [
-    [450, 20, 5],
-    [15, 850, 35],
-    [10, 20, 9385],
-  ],
-};
+export const MOCK_CONFUSION_MATRIX = [
+    [1250, 30], // True Neg, False Pos
+    [10, 390],  // False Neg, True Pos
+];
+
 
 export const CLASSIFICATION_DETAILS: { [key in ClassificationResult]: { label: string; color: string; description: string } } = {
   [ClassificationResult.CONFIRMED_EXOPLANET]: {

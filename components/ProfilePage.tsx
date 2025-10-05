@@ -30,15 +30,18 @@ const HistoryItemCard: React.FC<{ item: ClassificationHistoryItem }> = ({ item }
   }
 
   return (
-    <div className="bg-slate-200 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-300 dark:border-slate-600/50 transform transition-all duration-300 hover:scale-105 hover:border-amber-500/50 hover:bg-slate-300 dark:hover:bg-slate-700 hover:shadow-lg hover:shadow-amber-500/10 cursor-pointer">
+    <div className="bg-slate-200 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-300 dark:border-slate-600/50 transform transition-all duration-300 hover:scale-[1.02] hover:border-amber-500/50 hover:bg-slate-300 dark:hover:bg-slate-700 hover:shadow-lg hover:shadow-amber-500/10 cursor-pointer">
       <div className="flex flex-wrap justify-between items-start gap-4">
         <div>
-          <p className="text-xs text-slate-500 dark:text-gray-400">{item.timestamp}</p>
-          <div className={`mt-2 inline-block px-3 py-1 text-sm font-bold rounded-full border ${resultDetails.color}`}>
-            {resultDetails.label}
-          </div>
+            <h4 className="font-bold text-lg text-slate-800 dark:text-white truncate" title={item.data.name}>
+              {item.data.name}
+            </h4>
+            <div className={`mt-1 inline-block px-2 py-0.5 text-xs font-bold rounded-full border ${resultDetails.color}`}>
+                {resultDetails.label}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-gray-400 mt-2">{item.timestamp}</p>
         </div>
-        <div className="text-right text-xs text-slate-600 dark:text-gray-300 font-mono space-y-1">
+        <div className="text-right text-xs text-slate-600 dark:text-gray-300 font-mono space-y-1 self-center">
           <p>Period: <span className="text-amber-600 dark:text-amber-400">{formattedData.orbitalPeriod.value}{formattedData.orbitalPeriod.unit}</span></p>
           <p>Radius: <span className="text-amber-600 dark:text-amber-400">{formattedData.planetaryRadius.value} {formattedData.planetaryRadius.unit}</span></p>
           <p>Temp: <span className="text-amber-600 dark:text-amber-400">{formattedData.stellarTemperature.value} {formattedData.stellarTemperature.unit}</span></p>

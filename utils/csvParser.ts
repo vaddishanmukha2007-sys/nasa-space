@@ -1,7 +1,7 @@
 import type { ExoplanetData } from '../types';
 
-// The expected headers/column order must match the ExoplanetData interface keys.
-const REQUIRED_HEADERS: (keyof ExoplanetData)[] = [
+// The numeric headers that are strictly required.
+const REQUIRED_NUMERIC_HEADERS: (keyof ExoplanetData)[] = [
   'orbitalPeriod',
   'transitDuration',
   'planetaryRadius',
@@ -21,23 +21,23 @@ const parseCsvRows = (csvContent: string, maxRows?: number): ExoplanetData[] => 
   const firstLineRawItems = lines[0].split(',').map(item => item.trim());
   
   // A row is a header if it contains at least one non-empty value that is not a number.
-  // This avoids treating rows with trailing commas (which produce empty strings) as headers.
   const isHeaderPresent = firstLineRawItems.some(item => item !== '' && isNaN(parseFloat(item)));
 
   let dataLines: string[];
-  let columnMapping: { [key in keyof ExoplanetData]: number };
+  let columnMapping: { [key in keyof ExoplanetData]?: number };
 
   if (isHeaderPresent) {
     const header = firstLineRawItems;
     dataLines = maxRows ? lines.slice(1, maxRows + 1) : lines.slice(1);
 
-    const missingHeaders = REQUIRED_HEADERS.filter(h => !header.includes(h));
+    const missingHeaders = REQUIRED_NUMERIC_HEADERS.filter(h => !header.includes(h));
     if (missingHeaders.length > 0) {
         throw new Error(`CSV is missing required headers: ${missingHeaders.join(', ')}`);
     }
     
     // Create a mapping from our required fields to their index in the CSV header
     columnMapping = {
+        name: header.indexOf('name'), // Will be -1 if not found
         orbitalPeriod: header.indexOf('orbitalPeriod'),
         transitDuration: header.indexOf('transitDuration'),
         planetaryRadius: header.indexOf('planetaryRadius'),
@@ -45,16 +45,16 @@ const parseCsvRows = (csvContent: string, maxRows?: number): ExoplanetData[] => 
     };
     
   } else {
-    // No header detected, assume fixed order
+    // No header detected, assume fixed order for numeric values
     dataLines = maxRows ? lines.slice(0, maxRows) : lines;
     
-    // Check number of columns, ignoring empty values from trailing commas
     const firstLineDataItems = firstLineRawItems.filter(item => item !== '');
-    if (firstLineDataItems.length !== REQUIRED_HEADERS.length) {
-        throw new Error(`CSV without a header must have exactly ${REQUIRED_HEADERS.length} columns (found ${firstLineDataItems.length}). Expected order: ${REQUIRED_HEADERS.join(', ')}`);
+    if (firstLineDataItems.length !== REQUIRED_NUMERIC_HEADERS.length) {
+        throw new Error(`CSV without a header must have exactly ${REQUIRED_NUMERIC_HEADERS.length} columns (found ${firstLineDataItems.length}). Expected order: ${REQUIRED_NUMERIC_HEADERS.join(', ')}`);
     }
 
     columnMapping = {
+        name: -1, // No name column assumed for header-less files
         orbitalPeriod: 0,
         transitDuration: 1,
         planetaryRadius: 2,
@@ -66,26 +66,36 @@ const parseCsvRows = (csvContent: string, maxRows?: number): ExoplanetData[] => 
 
   for (const line of dataLines) {
     const dataRow = line.split(',');
+
+    const nameIndex = columnMapping.name ?? -1;
+    const orbitalPeriodIndex = columnMapping.orbitalPeriod!;
+    const transitDurationIndex = columnMapping.transitDuration!;
+    const planetaryRadiusIndex = columnMapping.planetaryRadius!;
+    const stellarTemperatureIndex = columnMapping.stellarTemperature!;
     
-    // Skip malformed/empty lines in the data body
-    if (dataRow.length < REQUIRED_HEADERS.length) continue;
+    // Skip malformed/empty lines
+    const maxIndex = Math.max(orbitalPeriodIndex, transitDurationIndex, planetaryRadiusIndex, stellarTemperatureIndex);
+    if (dataRow.length <= maxIndex) continue;
 
     const parsedData = {
-        orbitalPeriod: parseFloat(dataRow[columnMapping.orbitalPeriod]),
-        transitDuration: parseFloat(dataRow[columnMapping.transitDuration]),
-        planetaryRadius: parseFloat(dataRow[columnMapping.planetaryRadius]),
-        stellarTemperature: parseFloat(dataRow[columnMapping.stellarTemperature]),
+        name: nameIndex !== -1 && dataRow[nameIndex] ? dataRow[nameIndex].trim() : `CSV Candidate #${results.length + 1}`,
+        orbitalPeriod: parseFloat(dataRow[orbitalPeriodIndex]),
+        transitDuration: parseFloat(dataRow[transitDurationIndex]),
+        planetaryRadius: parseFloat(dataRow[planetaryRadiusIndex]),
+        stellarTemperature: parseFloat(dataRow[stellarTemperatureIndex]),
     };
 
-    const invalidEntries = Object.entries(parsedData).filter(([, value]) => isNaN(value));
+    const invalidEntries = Object.entries(parsedData).filter(([key, value]) => {
+        return key !== 'name' && (typeof value !== 'number' || isNaN(value));
+    });
+
     if (invalidEntries.length > 0) {
         const invalidKeys = invalidEntries.map(([key]) => key).join(', ');
-        // Warn and skip invalid rows instead of throwing an error for the whole file
         console.warn(`Skipping row with invalid non-numeric data for: ${invalidKeys} in row: "${line}"`);
         continue;
     }
 
-    results.push(parsedData);
+    results.push(parsedData as ExoplanetData);
   }
 
   return results;

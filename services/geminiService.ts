@@ -1,6 +1,7 @@
 
 
 
+
 // Fix: Add file extension to resolve module.
 import { ExoplanetData, ClassificationResult } from '../types.ts';
 // Fix: Import GoogleGenAI from the correct package
@@ -59,5 +60,43 @@ export const classifyExoplanet = async (data: ExoplanetData, lightCurveImageData
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     throw error;
+  }
+};
+
+export const getFascinatingFact = async (data: ExoplanetData): Promise<string> => {
+  console.log("Generating a fascinating fact with Gemini for:", data);
+
+  const prompt = `
+    Based on the following exoplanet characteristics:
+    - Orbital Period: ${data.orbitalPeriod.toFixed(2)} days
+    - Planetary Radius: ${data.planetaryRadius.toFixed(2)} Earth radii
+    - Stellar Temperature: ${data.stellarTemperature.toFixed(0)} K
+
+    Generate a single, fascinating, little-known, and easily understandable fact about exoplanets. The fact should be concise (around 1-3 sentences) and should creatively relate to one of the provided characteristics. Frame it as an interesting piece of trivia.
+
+    For example, you could talk about how a short orbital period means a year on that planet is incredibly fast, how a planet of that radius compares to others in our solar system, or what the stellar temperature implies about its star's color or the 'habitable zone'.
+
+    Do NOT simply state the data back. Provide an interesting piece of trivia or context related to it. Start the fact with "Did you know..." or a similar engaging hook.
+
+    Return ONLY the text of the fact. Do not include any titles or introductory text like "Here is a fascinating fact:".
+  `;
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    const response = await ai.models.generateContent({ 
+        model: 'gemini-2.5-flash', 
+        contents: prompt,
+    });
+
+    const factText = response.text.trim();
+    if (!factText) {
+        throw new Error("Gemini returned an empty fact.");
+    }
+    return factText;
+  } catch (error) {
+    console.error("Error calling Gemini API for a fact:", error);
+    // Provide a fallback fact
+    return "Did you know... some exoplanets, known as 'hot Jupiters', orbit so close to their star that their year lasts only a few Earth days!";
   }
 };
