@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent, useEffect } from 'react';
-import type { ExoplanetData } from '../types';
+// Fix: Add file extension to resolve module.
+import type { ExoplanetData } from '../types.ts';
 import { parseExoplanetCsv, previewExoplanetCsv } from '../utils/csvParser';
 import { useSettings } from '../contexts/SettingsContext';
 import { getUnitConfig, convertToDisplayValue, convertFromDisplayValue } from '../utils/units';
@@ -76,7 +77,7 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
 
     // Convert from display unit back to base unit and update parent state
     let baseValue = numericValue;
-    if (name !== 'transitDuration') { // Assuming transitDuration is not converted
+    if (name !== 'transitDuration' && name in units) { // Assuming transitDuration is not converted
         baseValue = convertFromDisplayValue(numericValue, units[name as keyof typeof units]);
     }
     setData(prevData => ({ ...prevData, [name]: baseValue }));
@@ -238,7 +239,8 @@ const InputPanel: React.FC<InputPanelProps> = ({ data, setData, onClassify }) =>
                     <UploadIcon className="w-12 h-12 text-amber-500 dark:text-amber-400 mb-4" />
                     <span className="font-semibold text-amber-500 dark:text-amber-400">Click to upload</span>
                     <p className="text-slate-500 dark:text-gray-400 text-xs mt-2">
-                        CSV with headers: <br />
+                        CSV with optional headers. <br />
+                        If no headers, data must be in this order: <br />
                         <code className="text-amber-600 dark:text-amber-300">orbitalPeriod, transitDuration, planetaryRadius, stellarTemperature</code>
                     </p>
                     <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".csv,.txt" />
@@ -292,7 +294,8 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, m
     <div>
         <div className="flex justify-between items-baseline mb-2">
             <div className="flex items-center gap-2 group relative">
-                <label htmlFor={name} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
+                {/* Fix: Explicitly cast `name` to string for htmlFor attribute */}
+                <label htmlFor={String(name)} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
                     {label}
                 </label>
                 <InfoIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
@@ -301,7 +304,8 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, m
                 </div>
             </div>
             {error && (
-                <div id={`${name}-error`} role="alert" className="flex items-center gap-1.5 text-red-500 dark:text-red-400 text-xs text-right animate-fade-in">
+                // Fix: Explicitly cast `name` to string for template literal
+                <div id={`${String(name)}-error`} role="alert" className="flex items-center gap-1.5 text-red-500 dark:text-red-400 text-xs text-right animate-fade-in">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -312,8 +316,10 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, m
         <div className="flex items-center gap-4">
             <input
                 type="range"
-                id={`${name}-range`}
-                name={name}
+                // Fix: Explicitly cast `name` to string for template literal
+                id={`${String(name)}-range`}
+                // Fix: Explicitly cast `name` to string for name attribute
+                name={String(name)}
                 value={value}
                 onChange={onChange}
                 min={min}
@@ -324,8 +330,10 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, m
             />
             <input
                 type="number"
-                id={name}
-                name={name}
+                // Fix: Explicitly cast `name` to string for id attribute
+                id={String(name)}
+                // Fix: Explicitly cast `name` to string for name attribute
+                name={String(name)}
                 value={value}
                 onChange={onChange}
                 min={min}
@@ -336,7 +344,8 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, m
                 }`}
                 aria-label={`${label} value`}
                 aria-invalid={!!error}
-                aria-describedby={error ? `${name}-error` : undefined}
+                // Fix: Explicitly cast `name` to string for template literal
+                aria-describedby={error ? `${String(name)}-error` : undefined}
             />
         </div>
     </div>

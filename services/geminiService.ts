@@ -1,6 +1,8 @@
 
 
-import { ExoplanetData, ClassificationResult } from '../types';
+
+// Fix: Add file extension to resolve module.
+import { ExoplanetData, ClassificationResult } from '../types.ts';
 // Fix: Import GoogleGenAI from the correct package
 import { GoogleGenAI } from "@google/genai";
 

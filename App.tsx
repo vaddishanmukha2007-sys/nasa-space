@@ -1,176 +1,164 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ClassificationResult, type ExoplanetData, type LightCurveDataPoint, type ModelMetrics, type Hyperparameters, type ClassificationHistoryItem } from './types';
-import { DEFAULT_EXOPLANET_DATA, DEFAULT_HYPERPARAMETERS, MOCK_MODEL_METRICS, KNOWN_EXOPLANETS } from './constants';
+import React, { useState, useEffect, useRef } from 'react';
+import type { ExoplanetData, Hyperparameters, ModelMetrics, ClassificationResult, ClassificationHistoryItem, CrossReferenceResult } from './types.ts';
+import { DEFAULT_EXOPLANET_DATA, DEFAULT_HYPERPARAMETERS, MOCK_MODEL_METRICS, RECENT_NASA_EXOPLANETS } from './constants.ts';
 import { classifyExoplanet } from './services/geminiService';
 import Header from './components/Header';
 import InputPanel from './components/InputPanel';
-import ResultsPanel from './components/ResultsPanel';
 import ControlPanel from './components/ControlPanel';
+import ResultsPanel from './components/ResultsPanel';
 import PerformancePanel from './components/PerformancePanel';
-import SettingsModal from './components/SettingsModal';
-import SolarSystemAnimation from './components/SolarSystemAnimation';
-import LoginPage from './components/LoginPage';
 import OpeningAnimation from './components/OpeningAnimation';
+import LoginPage from './components/LoginPage';
 import ProfilePage from './components/ProfilePage';
 import ArchivePanel from './components/ArchivePanel';
+import SettingsModal from './components/SettingsModal';
 import ChatButton from './components/ChatButton';
 import ChatModal from './components/ChatModal';
-
-type View = 'dashboard' | 'profile' | 'archive';
+import { useSettings } from './contexts/SettingsContext';
 
 const App: React.FC = () => {
+  const [showAnimation, setShowAnimation] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showOpeningAnimation, setShowOpeningAnimation] = useState(true);
-
-  const [activeView, setActiveView] = useState<View>('dashboard');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-
+  
   const [data, setData] = useState<ExoplanetData>(DEFAULT_EXOPLANET_DATA);
   const [hyperparameters, setHyperparameters] = useState<Hyperparameters>(DEFAULT_HYPERPARAMETERS);
   const [metrics, setMetrics] = useState<ModelMetrics>(MOCK_MODEL_METRICS);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isRetraining, setIsRetraining] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [result, setResult] = useState<ClassificationResult>(ClassificationResult.NONE);
-  const [lightCurveData, setLightCurveData] = useState<LightCurveDataPoint[]>([]);
-  const [crossReferenceResult, setCrossReferenceResult] = useState<{ name: string; fact: string } | null>(null);
+  const [classificationResult, setClassificationResult] = useState<ClassificationResult | null>(null);
+  const [crossReferenceResult, setCrossReferenceResult] = useState<CrossReferenceResult>(null);
   const [history, setHistory] = useState<ClassificationHistoryItem[]>([]);
 
-  const generateLightCurveData = useCallback((params: ExoplanetData): LightCurveDataPoint[] => {
-    const points: LightCurveDataPoint[] = [];
-    const totalDuration = Math.max(24, params.transitDuration * 2);
-    const numPoints = 500;
-    const transitStart = (totalDuration - params.transitDuration) / 2;
-    const transitEnd = transitStart + params.transitDuration;
-    const dipDepth = Math.pow(params.planetaryRadius / 11.2, 2) * 0.05;
+  const [activeView, setActiveView] = useState<'dashboard' | 'profile' | 'archive'>('dashboard');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  
+  const { theme } = useSettings();
+  const lightCurveCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Generate Light Curve Image for Gemini
+  const generateLightCurveImage = (canvas: HTMLCanvasElement, exoplanetData: ExoplanetData) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 40;
+    
+    // Theme-aware colors
+    const bgColor = theme === 'dark' ? '#1e293b' : '#ffffff';
+    const gridColor = theme === 'dark' ? '#334155' : '#e2e8f0';
+    const textColor = theme === 'dark' ? '#9ca3af' : '#475569';
+    const lineColor = theme === 'dark' ? '#f59e0b' : '#f97316';
+
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw Grid
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 10; i++) {
+        const y = padding + i * (height - 2 * padding) / 10;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+    }
+
+    // Draw Axes and Labels
+    ctx.fillStyle = textColor;
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Time (hours)', width / 2, height - 10);
+    ctx.save();
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Relative Flux', -height / 2, 15);
+    ctx.restore();
+    
+    // Simulate transit data points
+    const numPoints = 200;
+    const points = [];
+    const transitStart = (numPoints / 2) - (exoplanetData.transitDuration * (numPoints / 48)); // Center the transit
+    const transitEnd = transitStart + (exoplanetData.transitDuration * (numPoints / 48));
+    const transitDepth = Math.min(0.1, (exoplanetData.planetaryRadius / 10) ** 2); // Simplified depth
 
     for (let i = 0; i < numPoints; i++) {
-      const time = (i / numPoints) * totalDuration;
-      let flux = 1.0;
-      const noise = (Math.random() - 0.5) * 0.0005;
-
-      if (time >= transitStart && time <= transitEnd) {
-        flux -= dipDepth;
-      }
-      points.push({ time, flux: flux + noise });
+        let flux = 1.0;
+        if (i > transitStart && i < transitEnd) {
+            flux = 1.0 - transitDepth;
+        }
+        // Add realistic noise
+        flux += (Math.random() - 0.5) * 0.005;
+        points.push(flux);
     }
-    return points;
-  }, []);
-  
-  const generateLightCurveImageBase64 = (points: LightCurveDataPoint[], theme: 'light' | 'dark'): string => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 500;
-      canvas.height = 250;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return '';
-
-      const bgColor = theme === 'dark' ? '#1e293b' : '#ffffff';
-      const fgColor = theme === 'dark' ? '#e2e8f0' : '#1e293b';
-      const lineColor = '#f59e0b';
-      
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const padding = 40;
-      const plotWidth = canvas.width - padding * 2;
-      const plotHeight = canvas.height - padding * 2;
-      
-      const minFlux = Math.min(...points.map(p => p.flux)) - 0.001;
-      const maxFlux = Math.max(...points.map(p => p.flux)) + 0.001;
-      const maxTime = Math.max(...points.map(p => p.time));
-      
-      // Draw axes
-      ctx.strokeStyle = fgColor;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, canvas.height - padding);
-      ctx.lineTo(canvas.width - padding, canvas.height - padding);
-      ctx.stroke();
-
-      // Draw line
-      ctx.strokeStyle = lineColor;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      points.forEach((point, index) => {
-          const x = padding + (point.time / maxTime) * plotWidth;
-          const y = padding + (1 - (point.flux - minFlux) / (maxFlux - minFlux)) * plotHeight;
-          if (index === 0) {
-              ctx.moveTo(x, y);
-          } else {
-              ctx.lineTo(x, y);
-          }
-      });
-      ctx.stroke();
-      
-      return canvas.toDataURL('image/jpeg');
+    
+    // Draw Line
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < numPoints; i++) {
+        const x = padding + (i / (numPoints - 1)) * (width - 2 * padding);
+        const y = padding + (1.02 - points[i]) * (height - 2 * padding) / 0.04;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
   };
 
-  const crossReferenceWithKnownExoplanets = (inputData: ExoplanetData): { name: string; fact: string } | null => {
-      let bestMatch: { planet: (typeof KNOWN_EXOPLANETS)[0]; score: number } | null = null;
+  const crossReferenceWithNasaData = (userInput: ExoplanetData): void => {
+      const TOLERANCE = 0.025; // 2.5% tolerance for key parameters
 
-      for (const planet of KNOWN_EXOPLANETS) {
-          const periodDiff = Math.abs(planet.data.orbitalPeriod - inputData.orbitalPeriod) / planet.data.orbitalPeriod;
-          const radiusDiff = Math.abs(planet.data.planetaryRadius - inputData.planetaryRadius) / planet.data.planetaryRadius;
-          const tempDiff = Math.abs(planet.data.stellarTemperature - inputData.stellarTemperature) / planet.data.stellarTemperature;
-          
-          const score = (periodDiff + radiusDiff + tempDiff) / 3;
+      const foundMatch = RECENT_NASA_EXOPLANETS.find(nasaPlanet => {
+          const periodMatch = Math.abs(nasaPlanet.orbitalPeriod - userInput.orbitalPeriod) / nasaPlanet.orbitalPeriod <= TOLERANCE;
+          const radiusMatch = Math.abs(nasaPlanet.planetaryRadius - userInput.planetaryRadius) / nasaPlanet.planetaryRadius <= TOLERANCE;
+          const tempMatch = Math.abs(nasaPlanet.stellarTemperature - userInput.stellarTemperature) / nasaPlanet.stellarTemperature <= TOLERANCE;
+          // Transit duration can be more variable, so we use a wider tolerance
+          const durationMatch = Math.abs(nasaPlanet.transitDuration - userInput.transitDuration) / nasaPlanet.transitDuration <= (TOLERANCE * 2);
 
-          if (score < 0.15 && (!bestMatch || score < bestMatch.score)) {
-              bestMatch = { planet, score };
-          }
+          return periodMatch && radiusMatch && tempMatch && durationMatch;
+      });
+
+      if (foundMatch) {
+          setCrossReferenceResult(foundMatch);
+      } else {
+          setCrossReferenceResult('no_match');
       }
-
-      if (bestMatch) {
-          return { name: bestMatch.planet.name, fact: bestMatch.planet.fact };
-      }
-      return {
-          name: "Potentially New Discovery!",
-          fact: "The input parameters do not closely match any known exoplanets in our simplified database. This could represent a new candidate worthy of further investigation."
-      };
   };
 
   const handleClassify = async () => {
     setIsLoading(true);
-    setError(null);
-    setResult(ClassificationResult.NONE);
-    setCrossReferenceResult(null);
+    setClassificationResult(null);
+    setCrossReferenceResult(null); // Reset on new classification
+    
+    // Ensure canvas exists and generate image
+    if (!lightCurveCanvasRef.current) {
+        setIsLoading(false);
+        console.error("Canvas element not found");
+        return;
+    }
+    generateLightCurveImage(lightCurveCanvasRef.current, data);
+    const lightCurveImage = lightCurveCanvasRef.current.toDataURL('image/jpeg');
 
     try {
-      const generatedLightCurve = generateLightCurveData(data);
-      setLightCurveData(generatedLightCurve);
-      
-      // Use a timeout to allow the UI to update before generating the image
-      setTimeout(async () => {
-        const imageBase64 = generateLightCurveImageBase64(generatedLightCurve, 'dark'); // Assuming dark theme for generation
-        if (!imageBase64) {
-            throw new Error("Could not generate light curve image.");
-        }
-        
-        const classification = await classifyExoplanet(data, imageBase64);
-        setResult(classification);
+      const result = await classifyExoplanet(data, lightCurveImage);
+      setClassificationResult(result);
+      crossReferenceWithNasaData(data); // Perform cross-reference after classification
 
-        if (classification === ClassificationResult.CONFIRMED_EXOPLANET || classification === ClassificationResult.PLANETARY_CANDIDATE) {
-            const crossRef = crossReferenceWithKnownExoplanets(data);
-            setCrossReferenceResult(crossRef);
-        }
+      // Add to history
+      const newHistoryItem: ClassificationHistoryItem = {
+        id: new Date().toISOString() + Math.random(),
+        timestamp: new Date().toLocaleString(),
+        data: { ...data },
+        result: result,
+      };
+      setHistory(prev => [newHistoryItem, ...prev]);
 
-        const newHistoryItem: ClassificationHistoryItem = {
-          id: new Date().toISOString(),
-          timestamp: new Date().toLocaleString(),
-          data: data,
-          result: classification,
-        };
-        setHistory(prev => [newHistoryItem, ...prev]);
-
-      }, 100);
-
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An unknown error occurred during classification.';
-      setError(message);
+    } catch (error) {
+      console.error("Classification failed", error);
     } finally {
       setIsLoading(false);
     }
@@ -178,73 +166,88 @@ const App: React.FC = () => {
 
   const handleRetrain = () => {
     setIsRetraining(true);
+    // Simulate retraining time
     setTimeout(() => {
-      // Simulate new metrics after retraining
-      const newMetrics: ModelMetrics = {
-        accuracy: Math.min(0.99, metrics.accuracy + (Math.random() - 0.4) * 0.02),
-        precision: Math.min(0.99, metrics.precision + (Math.random() - 0.4) * 0.02),
-        recall: Math.min(0.99, metrics.recall + (Math.random() - 0.4) * 0.02),
-        f1Score: Math.min(0.99, metrics.f1Score + (Math.random() - 0.4) * 0.02),
+      // Simulate slight metric changes after retraining
+      const newMetrics = {
+        accuracy: Math.min(0.99, MOCK_MODEL_METRICS.accuracy + (Math.random() - 0.5) * 0.02),
+        precision: Math.min(0.99, MOCK_MODEL_METRICS.precision + (Math.random() - 0.5) * 0.02),
+        recall: Math.min(0.99, MOCK_MODEL_METRICS.recall + (Math.random() - 0.5) * 0.02),
+        f1Score: Math.min(0.99, MOCK_MODEL_METRICS.f1Score + (Math.random() - 0.5) * 0.02),
       };
       setMetrics(newMetrics);
       setIsRetraining(false);
     }, 2500);
   };
-  
-  const handleAnimationEnd = () => {
-      setShowOpeningAnimation(false);
-  };
 
+  const handleReset = () => {
+    setData(DEFAULT_EXOPLANET_DATA);
+    setHyperparameters(DEFAULT_HYPERPARAMETERS);
+    setClassificationResult(null);
+    setCrossReferenceResult(null);
+    setIsLoading(false);
+  };
+  
   const handleLogin = () => {
       setIsLoggedIn(true);
   };
 
-  useEffect(() => {
-    setLightCurveData(generateLightCurveData(data));
-  }, [data, generateLightCurveData]);
-
-
-  if (showOpeningAnimation) {
-    return <OpeningAnimation onAnimationEnd={handleAnimationEnd} />;
+  if (showAnimation) {
+    return <OpeningAnimation onAnimationEnd={() => setShowAnimation(false)} />;
   }
 
   if (!isLoggedIn) {
       return <LoginPage onLogin={handleLogin} />;
   }
 
-  return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-gray-200 font-sans transition-colors duration-500 relative isolate">
-        <SolarSystemAnimation />
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-            <Header activeView={activeView} setActiveView={setActiveView} onOpenSettings={() => setIsSettingsOpen(true)} />
-            
-            {activeView === 'dashboard' && (
-              <main className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
-                  <div className="space-y-8">
-                      <InputPanel data={data} setData={setData} onClassify={handleClassify} />
-                      <ControlPanel hyperparameters={hyperparameters} setHyperparameters={setHyperparameters} onRetrain={handleRetrain} isRetraining={isRetraining}/>
+  const renderView = () => {
+      switch(activeView) {
+          case 'profile':
+              return <ProfilePage history={history} />;
+          case 'archive':
+              return <ArchivePanel />;
+          case 'dashboard':
+          default:
+              return (
+                <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 animate-fade-in">
+                  <div className="lg:col-span-1 space-y-8">
+                    <InputPanel data={data} setData={setData} onClassify={handleClassify} />
+                    <ControlPanel 
+                      hyperparameters={hyperparameters} 
+                      setHyperparameters={setHyperparameters} 
+                      onRetrain={handleRetrain} 
+                      isRetraining={isRetraining} 
+                    />
                   </div>
-                  <div className="space-y-8">
-                      <ResultsPanel 
-                        isLoading={isLoading} 
-                        result={result} 
-                        lightCurveData={lightCurveData} 
-                        error={error}
-                        crossReferenceResult={crossReferenceResult}
-                        data={data}
-                      />
-                      <PerformancePanel isRetraining={isRetraining} metrics={metrics}/>
+                  <div className="lg:col-span-2 space-y-8">
+                    <ResultsPanel
+                      isLoading={isLoading}
+                      classificationResult={classificationResult}
+                      data={data}
+                      crossReferenceResult={crossReferenceResult}
+                      onReset={handleReset}
+                    />
+                    <PerformancePanel isRetraining={isRetraining} metrics={metrics} />
                   </div>
-              </main>
-            )}
+                </main>
+              );
+      }
+  }
 
-            {activeView === 'profile' && <ProfilePage history={history} />}
-            {activeView === 'archive' && <ArchivePanel />}
-        </div>
-        
-        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-        <ChatButton onClick={() => setIsChatOpen(true)} />
-        <ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+  return (
+    <div className={`min-h-screen bg-slate-100 dark:bg-slate-900 transition-colors duration-500 text-slate-800 dark:text-gray-200 font-sans`}>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <Header 
+          activeView={activeView} 
+          setActiveView={setActiveView}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+        {renderView()}
+        <canvas ref={lightCurveCanvasRef} width="500" height="300" style={{ display: 'none' }}></canvas>
+      </div>
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <ChatButton onClick={() => setIsChatOpen(true)} />
+      <ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 };

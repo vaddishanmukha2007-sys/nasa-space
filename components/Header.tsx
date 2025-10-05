@@ -1,5 +1,6 @@
 import React from 'react';
-import { UserIcon, SettingsIcon } from './Icons';
+// Fix: Add file extension to resolve module.
+import { UserIcon, SettingsIcon } from './Icons.tsx';
 import Logo from './Logo';
 
 interface HeaderProps {

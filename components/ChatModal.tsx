@@ -14,10 +14,10 @@ interface Message {
 }
 
 const SUGGESTED_PROMPTS = [
-  "What's the most unusual exoplanet ever found?",
-  "How do you detect an exoplanet?",
-  "Tell me about the TRAPPIST-1 system.",
-  "What is a 'Hot Jupiter'?",
+  "Explain what a 'light curve' tells us.",
+  "What's the difference between a Candidate and a Confirmed Exoplanet?",
+  "Tell me about the James Webb Telescope and exoplanets.",
+  "If I were on TRAPPIST-1e, what would I see?",
 ];
 
 const TypingIndicator = () => (

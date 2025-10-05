@@ -1,6 +1,8 @@
 import React from 'react';
-import type { Hyperparameters } from '../types';
-import { DEFAULT_HYPERPARAMETERS } from '../constants';
+// Fix: Add file extension to resolve module.
+import type { Hyperparameters } from '../types.ts';
+// Fix: Add file extension to resolve module.
+import { DEFAULT_HYPERPARAMETERS } from '../constants.ts';
 
 interface ControlPanelProps {
   hyperparameters: Hyperparameters;
@@ -116,7 +118,8 @@ const HyperparameterField: React.FC<HyperparameterFieldProps> = ({ label, name, 
     <div>
         <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2 group relative">
-                <label htmlFor={name} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
+                {/* Fix: Explicitly cast `name` to string for htmlFor attribute */}
+                <label htmlFor={String(name)} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
                     {label}
                 </label>
                 <InfoIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -128,8 +131,10 @@ const HyperparameterField: React.FC<HyperparameterFieldProps> = ({ label, name, 
         <div className="flex items-center gap-4">
             <input
                 type="range"
-                id={`${name}-range`}
-                name={name}
+                // Fix: Explicitly cast `name` to string for template literal
+                id={`${String(name)}-range`}
+                // Fix: Explicitly cast `name` to string for name attribute
+                name={String(name)}
                 value={value}
                 onChange={onChange}
                 min={min}
@@ -140,19 +145,21 @@ const HyperparameterField: React.FC<HyperparameterFieldProps> = ({ label, name, 
             />
             <input
                 type="number"
-                id={name}
-                name={name}
+                // Fix: Explicitly cast `name` to string for id attribute
+                id={String(name)}
+                // Fix: Explicitly cast `name` to string for name attribute
+                name={String(name)}
                 value={value}
                 onChange={onChange}
                 min={min}
                 max={max}
                 step={step}
-                className="w-28 text-center bg-slate-100 dark:bg-slate-900/60 border border-slate-400 dark:border-slate-600 rounded-lg py-1 px-2 font-mono text-amber-600 dark:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all duration-300"
+                className="w-28 text-center bg-slate-100 dark:bg-slate-900/60 border border-slate-400 dark:border-slate-600 rounded-lg py-1 px-2 font-mono text-amber-600 dark:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-300"
                 aria-label={`${label} value`}
             />
         </div>
     </div>
 );
 
-
+// Fix: Add missing default export
 export default ControlPanel;
